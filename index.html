@@ -771,7 +771,7 @@ function checkTradeSignal(signal, spot){
   tradeEntry = {
     signal: signal,
     optionKey: opt.instrument_key,
-    optionType: signal==='BULL'?'CE':'PE',
+    optionType: signal==='BUY CE'?'CE':'PE',
     strike: opt.strike,
     entry: opt.ltp,
     qty: qty,
@@ -793,7 +793,7 @@ function getATMContract(direction){
   });
   var match = lastChainData.find(function(d){ return d.strike_price === atmStrike; });
   if(!match) return null;
-  var isCallOption = (direction === 'BULL' || direction === 'BUY CE');
+  var isCallOption = (direction === 'BUY CE' || direction === 'SELL CE');
   var opt = isCallOption ? match.call_options : match.put_options;
   if(!opt || !opt.instrument_key) return null;
   return {
@@ -810,7 +810,7 @@ function closeOptionTrade(reason){
   if(isNaN(currentLtp) || currentLtp <= 0) currentLtp = tradeEntry.entry;
   
   var pnlPts = currentLtp - tradeEntry.entry;
-  if(tradeEntry.signal === 'BEAR') pnlPts = tradeEntry.entry - currentLtp;
+  if(tradeEntry.signal === 'BUY PE') pnlPts = tradeEntry.entry - currentLtp;
   
   var lotSize = getLotSize();
   var pnlRs = pnlPts * lotSize * (tradeEntry.qty || 1);
@@ -825,11 +825,11 @@ function closeOptionTrade(reason){
 function updateActiveTrade(ltp){
   if(!tradeEntry || !tradeEntry.signal){ $('activeTrade').style.display='none'; $('noTrade').style.display='block'; return; }
   $('activeTrade').style.display='block'; $('noTrade').style.display='none';
-  $('atDir').textContent = (tradeEntry.optionType||'')+' '+tradeEntry.strike+' Qty:'+(tradeEntry.qty||1)+' '+(tradeEntry.signal==='BULL'?'▲':'▼');
+  $('atDir').textContent = (tradeEntry.optionType||'')+' '+tradeEntry.strike+' Qty:'+(tradeEntry.qty||1)+' '+(tradeEntry.signal==='BUY CE'?'▲':'▼');
   $('atEntry').textContent = tradeEntry.entry.toFixed(2);
   $('atLTP').textContent = ltp.toFixed(2);
   var pnlPts = ltp - tradeEntry.entry;
-  if(tradeEntry.signal === 'BEAR') pnlPts = tradeEntry.entry - ltp;
+  if(tradeEntry.signal === 'BUY PE') pnlPts = tradeEntry.entry - ltp;
   var lotSize = getLotSize();
   var pnlRs = pnlPts * lotSize * (tradeEntry.qty||1);
   $('atPLpts').textContent = (pnlPts>=0?'+':'')+pnlPts.toFixed(1)+' pts ×'+(tradeEntry.qty||1);
@@ -837,7 +837,7 @@ function updateActiveTrade(ltp){
   $('atSLval').textContent = (tradeEntry.entry * 0.90).toFixed(2);
   if(tradeEntry.entryMs){ $('atExitTime').textContent = '--:--'; }
   var profitPct = (ltp - tradeEntry.entry)/tradeEntry.entry*100;
-  if(tradeEntry.signal === 'BEAR') profitPct = (tradeEntry.entry - ltp)/tradeEntry.entry*100;
+  if(tradeEntry.signal === 'BUY PE') profitPct = (tradeEntry.entry - ltp)/tradeEntry.entry*100;
   if(profitPct <= -10) closeOptionTrade('🛑 10% Emergency SL');
 }
 
